@@ -1,0 +1,187 @@
+#include <stdio.h>
+#include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_image.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_color.h>
+
+#define SCREEN_W 800
+#define SCREEN_H 800
+#define SQUARE_SIZE 100
+
+char tab[8][8] = {
+    {' ', 'o', ' ', 'o', ' ', 'o', ' ', 'o'},
+    {'o', ' ', 'o', ' ', 'o', ' ', 'o', ' '},
+    {' ', 'o', ' ', 'o', ' ', 'o', ' ', 'o'},
+    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+    {'x', ' ', 'x', ' ', 'x', ' ', 'x', ' '},
+    {' ', 'x', ' ', 'x', ' ', 'x', ' ', 'x'},
+    {'x', ' ', 'x', ' ', 'x', ' ', 'x', ' '}
+
+};
+
+void drawBoard() {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if ((i + j) % 2 == 0)
+                al_draw_filled_rectangle(j * SQUARE_SIZE, i * SQUARE_SIZE, (j + 1) * SQUARE_SIZE, (i + 1) * SQUARE_SIZE, al_map_rgb(255, 255, 255));
+            else
+                al_draw_filled_rectangle(j * SQUARE_SIZE, i * SQUARE_SIZE, (j + 1) * SQUARE_SIZE, (i + 1) * SQUARE_SIZE, al_map_rgb(0, 0, 0));
+
+            if (tab[i][j] == 'x')
+                al_draw_filled_circle(j * SQUARE_SIZE + SQUARE_SIZE / 2, i * SQUARE_SIZE + SQUARE_SIZE / 2, SQUARE_SIZE / 2 - 5, al_map_rgb(255, 0, 0));
+            else if (tab[i][j] == 'o')
+                al_draw_filled_circle(j * SQUARE_SIZE + SQUARE_SIZE / 2, i * SQUARE_SIZE + SQUARE_SIZE / 2, SQUARE_SIZE / 2 - 5, al_map_rgb(0, 0, 255));
+        }
+    }
+}
+int isValidMove(char piece, int fromRow, int fromCol, int toRow, int toCol) {
+    if (toRow < 0 || toRow >= 8 || toCol < 0 || toCol >= 8)
+        return 0; // Destination out of bounds
+
+    if (tab[toRow][toCol] != ' ')
+        return 0; // Destination is not empty
+
+    if (piece == 'x') {
+        if (toRow == fromRow - 1 && (toCol == fromCol - 1 || toCol == fromCol + 1))
+            return 1; // Regular move for x
+        else if (toRow == fromRow - 2 && (toCol == fromCol - 2 || toCol == fromCol + 2)) {
+            // Check if it's a capture move for x
+            int enemyRow = (toRow + fromRow) / 2;
+            int enemyCol = (toCol + fromCol) / 2;
+            if (tab[enemyRow][enemyCol] == 'o')
+                return 1;
+        }
+    } else if (piece == 'o') {
+        if (toRow == fromRow + 1 && (toCol == fromCol - 1 || toCol == fromCol + 1))
+            return 1; // Regular move for o
+        else if (toRow == fromRow + 2 && (toCol == fromCol - 2 || toCol == fromCol + 2)) {
+            // Check if it's a capture move for o
+            int enemyRow = (toRow + fromRow) / 2;
+            int enemyCol = (toCol + fromCol) / 2;
+            if (tab[enemyRow][enemyCol] == 'x')
+                return 1;
+        }
+    }
+    return 0; // Invalid move
+}
+int gameOver(char currentPlayer, char board[8][8]) {
+    int xCount = 0, oCount = 0;
+
+    // Licz pionki każdego gracza
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (board[i][j] == 'x')
+                xCount++;
+            else if (board[i][j] == 'o')
+                oCount++;
+        }
+    }
+
+    // Gra kończy się, gdy któryś z graczy straci wszystkie pionki lub gdy żaden z graczy nie ma możliwych ruchów
+    if (xCount == 0 ){
+        return 1; // Gra się zakończyła
+    }
+    else if(oCount == 0){
+        return 2;
+    }
+    //else if(!hasValidMoves(currentPlayer, board)){
+    //    return 3;
+    //}
+    else{return 0;}
+}
+void displayWinner(char winner) {
+    ALLEGRO_FONT *font = al_create_builtin_font();
+    al_clear_to_color(al_map_rgb(0, 0, 0));
+    if (winner == 'x') {
+        al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2,ALLEGRO_ALIGN_CENTER, "Red Wins!");
+    } else if (winner == 'o') {
+        al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2,ALLEGRO_ALIGN_CENTER, "Blue Wins!");
+    }
+    else if (winner == 'd') {
+        al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2,ALLEGRO_ALIGN_CENTER, "Draw!");
+    }
+    al_flip_display();
+    al_rest(3); // Poczekaj 3 sekundy przed zamknięciem
+}
+// Dodaj tutaj funkcje z Twojego pierwotnego kodu, takie jak isValidMove, movePiece, countPieces itp.
+// Pamiętaj, że musisz dostosować te funkcje do pracy z biblioteką Allegro.
+// Na przykład, zamiast używać funkcji printf do wyświetlania informacji, możesz użyć funkcji al_draw_text z biblioteki Allegro.
+// Podobnie, zamiast używać funkcji scanf do odczytywania danych wejściowych, możesz użyć funkcji obsługi zdarzeń Allegro do obsługi kliknięć myszy.
+
+int main() {
+    al_init();
+    al_init_primitives_addon();
+    al_install_mouse();
+
+    ALLEGRO_DISPLAY *display = al_create_display(SCREEN_W, SCREEN_H);
+    ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
+    al_register_event_source(event_queue, al_get_mouse_event_source());
+    al_register_event_source(event_queue, al_get_display_event_source(display));
+
+    char currentPlayer = 'x';
+    int selectedRow = -1;
+    int selectedCol = -1;
+
+    while (1) {
+        ALLEGRO_EVENT ev;
+        al_wait_for_event(event_queue, &ev);
+
+        if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+            break;
+        }
+
+        if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+            int mouseX = ev.mouse.x;
+            int mouseY = ev.mouse.y;
+
+            int row = mouseY / SQUARE_SIZE;
+            int col = mouseX / SQUARE_SIZE;
+
+            if (selectedRow == -1 && selectedCol == -1) {
+                // Select a piece
+               if (tab[row][col] == currentPlayer) {
+                    selectedRow = row;
+                    selectedCol = col;
+                }
+            } else {
+                // Move the selected piece
+                if (isValidMove(tab[selectedRow][selectedCol], selectedRow, selectedCol, row, col)) {
+                    tab[row][col] = tab[selectedRow][selectedCol];
+                    tab[selectedRow][selectedCol] = ' ';
+
+                    // Check if it's a capture move and remove the captured piece
+                    if (abs(row - selectedRow) == 2) {
+                        int capturedRow = (row + selectedRow) / 2;
+                        int capturedCol = (col + selectedCol) / 2;
+                        tab[capturedRow][capturedCol] = ' ';
+                    }
+                      currentPlayer = (currentPlayer == 'x') ? 'o' : 'x';
+                }
+
+                selectedRow = -1;
+                selectedCol = -1;
+            }
+        }
+        int gameResult = gameOver(currentPlayer, tab);
+        if(gameResult == 1){
+            displayWinner('o');
+            break;
+        }
+        else if(gameResult == 2){
+            displayWinner('x');
+            break;
+        }
+        //else if(gameResult == 3){
+        //    displayWinner("d");
+         //   break;
+        //}
+        drawBoard();
+        al_flip_display();
+    }
+
+    al_destroy_display(display);
+
+    return 0;
+}
