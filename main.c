@@ -74,8 +74,6 @@ void ruchX(){
             bicie = 0;
         }
 
-
-
         if(tab[w1][k1] == ' ' && (k1==kolumna+1 || k1==kolumna-1) && w1==wiersz-1 && w1>=0 && w1<8 && k1>=0 && k1<8 && bicie == 0){
             tab[w1][k1]='x';
             tab[wiersz][kolumna]=' ';
