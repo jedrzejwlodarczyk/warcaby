@@ -9,14 +9,14 @@
 #define SCREEN_W 800
 #define SCREEN_H 840
 #define SQUARE_SIZE 100
-int continueCapture=0;
+
 char tab[8][8][2] ={
     {{' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}},
     {{' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}},
     {{' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {'o', ' '}, {' ', ' '}, {' ', ' '}},
     {{' ', ' '}, {' ', ' '}, {'o', ' '}, {' ', ' '}, {'o', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}},
     {{' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}},
-    {{'x', ' '}, {' ', ' '}, {'x', ' '}, {' ', ' '}, {'X', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}},
+    {{'x', ' '}, {' ', ' '}, {'x', ' '}, {' ', ' '}, {'x', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}},
     {{' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {'x', ' '}, {' ', ' '}, {'o', ' '}},
     {{' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}, {' ', ' '}}};
  /*{
@@ -133,51 +133,87 @@ int isValidMove(char piece, int fromRow, int fromCol, int toRow, int toCol) {
         }
     return 0; // Invalid move
 }
-int hasCaptureMovesonepiece(char currentPlayer, int row, int col) {
-    int directions[4][2] = {
-        {-2, -2}, {-2, 2}, {2, -2}, {2, 2}
-    };
+int hasCaptureMovesonepiece(char player,int i,int j){
+    if (tab[i][j][0] == player || tab[i][j][0] == toupper(player)) {
+        if (player == 'x' || player == 'X') {
+            // Regular or Damka captures for x
+            if (i - 2 >= 0 && j - 2 >= 0 && (tab[i - 1][j - 1][0] == 'o' || tab[i - 1][j - 1][0] == 'O') && tab[i - 2][j - 2][0] == ' ')
+                return 1;
+            if (i - 2 >= 0 && j + 2 < 8 && (tab[i - 1][j + 1][0] == 'o' || tab[i - 1][j + 1][0] == 'O') && tab[i - 2][j + 2][0] == ' ')
+                return 1;
+            } else if (player == 'o' || player == 'O') {
+                // Regular or Damka captures for o
+                if (i + 2 < 8 && j - 2 >= 0 && (tab[i + 1][j - 1][0] == 'x' || tab[i + 1][j - 1][0] == 'X') && tab[i + 2][j - 2][0] == ' ')
+                    return 1;
+                if (i + 2 < 8 && j + 2 < 8 && (tab[i + 1][j + 1][0] == 'x' || tab[i + 1][j + 1][0] == 'X') && tab[i + 2][j + 2][0] == ' ')
+                    return 1;
+            }
 
-    for (int i = 0; i < 4; i++) {
-        int newRow = row + directions[i][0];
-        int newCol = col + directions[i][1];
-        if (isValidMove(currentPlayer, row, col, newRow, newCol)) {
-            return 1; // There's at least one capture move
+    if (tab[i][j][0] == toupper(player)) {
+        // Damka captures
+        int directions[4][2] = { {1, 1}, {1, -1}, {-1, 1}, {-1, -1} };
+        for (int d = 0; d < 4; d++) {
+            int rowDirection = directions[d][0];
+            int colDirection = directions[d][1];
+            int r = i + rowDirection, c = j + colDirection;
+            while (r + rowDirection >= 0 && r + rowDirection < 8 && c + colDirection >= 0 && c + colDirection < 8) {
+                if ((tab[r][c][0] == 'x' || tab[r][c][0] == 'X' || tab[r][c][0] == 'o' || tab[r][c][0] == 'O') && tab[r + rowDirection][c + colDirection][0] == ' ') {
+                    return 1;
+                }
+                if (tab[r][c][0] != ' ')
+                    break;
+                r += rowDirection;
+                c += colDirection;
+                }
+            }
         }
-    }
+    }   
 
-    return 0; // No capture moves
 }
 
-int hasCaptureMoves(char currentPlayer) {
+int hasCaptureMoves(char player) {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
-            if ((currentPlayer == 'x' && (tab[i][j][0] == 'x' || tab[i][j][0] == 'X')) ||
-                (currentPlayer == 'o' && (tab[i][j][0] == 'o' || tab[i][j][0] == 'O'))) {
-                if (hasCaptureMovesonepiece(currentPlayer, i, j)) {
-                    return 1; // At least one piece can capture
+            if (tab[i][j][0] == player || tab[i][j][0] == toupper(player)) {
+                if (player == 'x' || player == 'X') {
+                    // Regular or Damka captures for x
+                    if (i - 2 >= 0 && j - 2 >= 0 && (tab[i - 1][j - 1][0] == 'o' || tab[i - 1][j - 1][0] == 'O') && tab[i - 2][j - 2][0] == ' ')
+                        return 1;
+                    if (i - 2 >= 0 && j + 2 < 8 && (tab[i - 1][j + 1][0] == 'o' || tab[i - 1][j + 1][0] == 'O') && tab[i - 2][j + 2][0] == ' ')
+                        return 1;
+                } else if (player == 'o' || player == 'O') {
+                    // Regular or Damka captures for o
+                    if (i + 2 < 8 && j - 2 >= 0 && (tab[i + 1][j - 1][0] == 'x' || tab[i + 1][j - 1][0] == 'X') && tab[i + 2][j - 2][0] == ' ')
+                        return 1;
+                    if (i + 2 < 8 && j + 2 < 8 && (tab[i + 1][j + 1][0] == 'x' || tab[i + 1][j + 1][0] == 'X') && tab[i + 2][j + 2][0] == ' ')
+                        return 1;
+                }
+
+                if (tab[i][j][0] == 'X' || tab[i][j][0] == 'O') {
+                    // Damka captures
+                    int directions[4][2] = { {1, 1}, {1, -1}, {-1, 1}, {-1, -1} };
+                    for (int d = 0; d < 4; d++) {
+                        int rowDirection = directions[d][0];
+                        int colDirection = directions[d][1];
+                        int r = i + rowDirection, c = j + colDirection;
+                        while (r + rowDirection >= 0 && r + rowDirection < 8 && c + colDirection >= 0 && c + colDirection < 8) {
+                            if ((tab[r][c][0] == 'x' || tab[r][c][0] == 'X' || tab[r][c][0] == 'o' || tab[r][c][0] == 'O') && tab[r + rowDirection][c + colDirection][0] == ' ') {
+                                return 1;
+                            }
+                            if (tab[r][c][0] != ' ')
+                                break;
+                            r += rowDirection;
+                            c += colDirection;
+                        }
+                    }
                 }
             }
         }
     }
-    return 0; // No piece can capture
+    return 0;
 }
 
-int hasValidMoves(char player) {
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if ((player == 'x' && (tab[i][j][0] == 'x' || tab[i][j][0] == 'X')) ||
-                (player == 'o' && (tab[i][j][0] == 'o' || tab[i][j][0] == 'O'))) {
-                if (hasCaptureMovesonepiece(player, i, j) || isValidMove(tab[i][j][0], i, j, i + 1, j - 1) ||
-                    isValidMove(tab[i][j][0], i, j, i + 1, j + 1) || isValidMove(tab[i][j][0], i, j, i - 1, j - 1) ||
-                    isValidMove(tab[i][j][0], i, j, i - 1, j + 1)) {
-                    return 1; // Gracz ma dostępne legalne ruchy
-                }
-            }
-        }
-    }
-    return 0; // Gracz nie ma dostępnych legalnych ruchów
-}
+
 
 int gameOver(char currentPlayer, char board[8][8][2]) {
     int xCount = 0, oCount = 0;
@@ -200,9 +236,9 @@ int gameOver(char currentPlayer, char board[8][8][2]) {
         winner='x';
         return winner;
     }
-    else if (!hasValidMoves(currentPlayer)) {
-        return 'd'; // Remis
-    }
+    //else if(!hasValidMoves(currentPlayer, board)){
+    //    return 3;
+    //}
     else{
         winner=' ';
         return winner;}
@@ -223,45 +259,6 @@ void displayWinner(char winner) {
     al_flip_display();
     al_rest(3); // Poczekaj 3 sekundy przed zamknięciem
     exit(5);
-}
-
-void makemove(char currentPlayer,int selectedRow, int selectedCol, int row, int col){
-                    int isCapture = abs(row - selectedRow) > 1;
-                    if (isCapture || !hasCaptureMoves(currentPlayer)) {
-                        tab[row][col][0] = tab[selectedRow][selectedCol][0];
-                        tab[selectedRow][selectedCol][0] = ' ';
-
-                        // Check if it's a capture move and remove the captured piece
-                        if (isCapture) {
-                            if (abs(selectedRow - row) == 2) {
-                                int capturedRow = (row + selectedRow) / 2;
-                                int capturedCol = (col + selectedCol) / 2;
-                                if (tab[capturedRow][capturedCol][0] != ' ')
-                                    tab[capturedRow][capturedCol][0] = ' ';
-                            } else {
-                                int rowDirection = (selectedRow - row) / abs(selectedRow - row);
-                                int colDirection = (selectedCol - col) / abs(selectedCol - col);
-                                int i = row + rowDirection;
-                                int j = col + colDirection;
-                                while (i != selectedRow && j != selectedCol) {
-                                    if (tab[i][j][0] != ' ') {
-                                        tab[i][j][0] = ' '; // Usunięcie zbitego pionka
-                                        break;
-                                    }
-                                    i += rowDirection;
-                                    j += colDirection;
-                                }
-                            }
-                            displayWinner(gameOver(currentPlayer,tab));
-                        }
-
-                        // Promote to damka if reached the end of the board
-                        if (tab[row][col][0] == 'x' && row == 0)
-                            tab[row][col][0] = 'X';
-                        else if (tab[row][col][0] == 'o' && row == 7)
-                            tab[row][col][0] = 'O';
-    }
-    return;
 }
 
 
@@ -303,31 +300,59 @@ int main() {
             } else {
                 // Move the selected piece
                 if (isValidMove(tab[selectedRow][selectedCol][0], selectedRow, selectedCol, row, col)) {
-                    makemove(currentPlayer, selectedRow, selectedCol, row, col);
+                    int isCapture = abs(row - selectedRow) > 1;
 
-                    if (abs(row - selectedRow) == 2 || abs(row - selectedRow) > 2) {
-                        // Check if there are further capture moves
-                        if (hasCaptureMovesonepiece(currentPlayer, row, col)) {
-                            continueCapture = 1;
-                            selectedRow = row;
-                            selectedCol = col;
-                        } else {
-                            continueCapture = 0;
-                            currentPlayer = (currentPlayer == 'x') ? 'o' : 'x';
-                            selectedRow = -1;
-                            selectedCol = -1;
+                    if (isCapture || !hasCaptureMoves(currentPlayer)) {
+                        tab[row][col][0] = tab[selectedRow][selectedCol][0];
+                        tab[selectedRow][selectedCol][0] = ' ';
+
+                        // Check if it's a capture move and remove the captured piece
+                        if (isCapture) {
+                            if (abs(selectedRow - row) == 2) {
+                                int capturedRow = (row + selectedRow) / 2;
+                                int capturedCol = (col + selectedCol) / 2;
+                                if (tab[capturedRow][capturedCol][0] != ' ')
+                                    tab[capturedRow][capturedCol][0] = ' ';
+                            } else {
+                                int rowDirection = (selectedRow - row) / abs(selectedRow - row);
+                                int colDirection = (selectedCol - col) / abs(selectedCol - col);
+                                int i = row + rowDirection;
+                                int j = col + colDirection;
+                                while (i != selectedRow && j != selectedCol) {
+                                    if (tab[i][j][0] != ' ') {
+                                        tab[i][j][0] = ' '; // Usunięcie zbitego pionka
+                                        break;
+                                    }
+                                    i += rowDirection;
+                                    j += colDirection;
+                                }
+                            }
+                            displayWinner(gameOver(currentPlayer,tab));
                         }
-                    } else {
-                        continueCapture = 0;
+
+                        // Promote to damka if reached the end of the board
+                        if (tab[row][col][0] == 'x' && row == 0)
+                            tab[row][col][0] = 'X';
+                        else if (tab[row][col][0] == 'o' && row == 7)
+                            tab[row][col][0] = 'O';
+                        
+                        if(isCapture && hasCaptureMovesonepiece(currentPlayer,row,col)){
+                            //capture more
+                        }
+                        else{
                         currentPlayer = (currentPlayer == 'x') ? 'o' : 'x';
-                        selectedRow = -1;
-                        selectedCol = -1;
+                        }
                     }
+
+                    selectedRow = -1;
+                    selectedCol = -1;
                 } else {
                     selectedRow = -1;
                     selectedCol = -1;
                 }
             }
+        
+            
         }
 
         // Rysowanie planszy na ekranie

@@ -158,6 +158,42 @@ int hasCaptureMoves(char player) {
 }
 
 
+void moveAndCapture(char piece, int fromRow, int fromCol, int toRow, int toCol) {
+    int isCapture = abs(toRow - fromRow) > 1;
+
+    tab[toRow][toCol][0] = tab[fromRow][fromCol][0];
+    tab[fromRow][fromCol][0] = ' ';
+
+    // Check if it's a capture move and remove the captured piece
+    if (isCapture) {
+        if (abs(fromRow - toRow) == 2) {
+            int capturedRow = (toRow + fromRow) / 2;
+            int capturedCol = (toCol + fromCol) / 2;
+            if (tab[capturedRow][capturedCol][0] != ' ')
+                tab[capturedRow][capturedCol][0] = ' ';
+        } else {
+            int rowDirection = (fromRow - toRow) / abs(fromRow - toRow);
+            int colDirection = (fromCol - toCol) / abs(fromCol - toCol);
+            int i = toRow + rowDirection;
+            int j = toCol + colDirection;
+            while (i != fromRow && j != fromCol) {
+                if (tab[i][j][0] != ' ') {
+                    tab[i][j][0] = ' '; // Usunięcie zbitego pionka
+                    break;
+                }
+                i += rowDirection;
+                j += colDirection;
+            }
+        }
+    }
+
+    // Promote to damka if reached the end of the board
+    if (tab[toRow][toCol][0] == 'x' && toRow == 0)
+        tab[toRow][toCol][0] = 'X';
+    else if (tab[toRow][toCol][0] == 'o' && toRow == 7)
+        tab[toRow][toCol][0] = 'O';
+}
+
 int gameOver(char currentPlayer, char board[8][8][2]) {
     int xCount = 0, oCount = 0;
 
@@ -186,14 +222,19 @@ int gameOver(char currentPlayer, char board[8][8][2]) {
 
 void displayWinner(char winner) {
     ALLEGRO_FONT *font = al_create_builtin_font();
-    al_clear_to_color(al_map_rgb(0, 0, 0));
     if (winner == 'x') {
+        al_clear_to_color(al_map_rgb(0, 0, 0));
         al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2,ALLEGRO_ALIGN_CENTER, "Red Wins!");
     } else if (winner == 'o') {
+        al_clear_to_color(al_map_rgb(0, 0, 0));
         al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2,ALLEGRO_ALIGN_CENTER, "Blue Wins!");
     }
     else if (winner == 'd') {
+        al_clear_to_color(al_map_rgb(0, 0, 0));
         al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2,ALLEGRO_ALIGN_CENTER, "Draw!");
+    }
+    else if(winner=' '){
+        return;
     }
     al_flip_display();
     al_rest(3); // Poczekaj 3 sekundy przed zamknięciem
@@ -238,41 +279,10 @@ int main() {
             } else {
                 // Move the selected piece
                 if (isValidMove(tab[selectedRow][selectedCol][0], selectedRow, selectedCol, row, col)) {
-                    int isCapture = abs(row - selectedRow) == 2 || abs(row - selectedRow) > 1;
+                    int isCapture = abs(row - selectedRow) > 1;
 
                     if (isCapture || !hasCaptureMoves(currentPlayer)) {
-                        tab[row][col][0] = tab[selectedRow][selectedCol][0];
-                        tab[selectedRow][selectedCol][0] = ' ';
-
-                        // Check if it's a capture move and remove the captured piece
-                        if (isCapture) {
-                            if (abs(selectedRow - row) == 2) {
-                                int capturedRow = (row + selectedRow) / 2;
-                                int capturedCol = (col + selectedCol) / 2;
-                                if (tab[capturedRow][capturedCol][0] != ' ')
-                                    tab[capturedRow][capturedCol][0] = ' ';
-                            } else {
-                                int rowDirection = (selectedRow - row) / abs(selectedRow - row);
-                                int colDirection = (selectedCol - col) / abs(selectedCol - col);
-                                int i = row + rowDirection;
-                                int j = col + colDirection;
-                                while (i != selectedRow && j != selectedCol) {
-                                    if (tab[i][j][0] != ' ') {
-                                        tab[i][j][0] = ' '; // Usunięcie zbitego pionka
-                                        break;
-                                    }
-                                    i += rowDirection;
-                                    j += colDirection;
-                                }
-                            }
-                        }
-
-                        // Promote to damka if reached the end of the board
-                        if (tab[row][col][0] == 'x' && row == 0)
-                            tab[row][col][0] = 'X';
-                        else if (tab[row][col][0] == 'o' && row == 7)
-                            tab[row][col][0] = 'O';
-
+                        moveAndCapture(tab[selectedRow][selectedCol][0], selectedRow, selectedCol, row, col);
                         currentPlayer = (currentPlayer == 'x') ? 'o' : 'x';
                     }
 
@@ -283,12 +293,18 @@ int main() {
                     selectedCol = -1;
                 }
             }
-        
-            
         }
-
+        char winner=' ';
+        if(gameOver(currentPlayer,tab)==1){
+            winner='x';
+        }
+        else if(gameOver(currentPlayer,tab)==2){
+            winner='o';
+            }
+        
         // Rysowanie planszy na ekranie
         drawBoard();
+        displayWinner(winner);
         al_flip_display();
     }
 
@@ -297,7 +313,3 @@ int main() {
 
     return 0;
 }
-
-
-
-
