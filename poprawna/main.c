@@ -124,6 +124,19 @@ int canAnyPieceCapture(char piece) {
     return 0;
 }
 
+int canPlayerMove(char piece) {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (board[i][j] == piece || board[i][j] == piece - 'x' + 'X' || board[i][j] == piece - 'o' + 'O') {
+                if (canMoveOrCapture(i, j, board[i][j])) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 void makeMove(int row, int col, int newRow, int newCol, char piece) {
     board[newRow][newCol] = piece;
     board[row][col] = ' ';
@@ -158,9 +171,15 @@ void movePiece(int *row, int *col, char piece) {
         printf("Where do you want to move it? \n");
 
         printf("Row: ");
-        scanf("%d", &newRow);
+        while (scanf("%d", &newRow) != 1) {
+            printf("Invalid input! Please enter a number for the row: ");
+            while (getchar() != '\n'); // clear the input buffer
+        }
         printf("Column: ");
-        scanf("%d", &newCol);
+        while (scanf("%d", &newCol) != 1) {
+            printf("Invalid input! Please enter a number for the column: ");
+            while (getchar() != '\n'); // clear the input buffer
+        }
         newRow = newRow - 1;
         newCol = newCol - 1;
 
@@ -176,11 +195,7 @@ void movePiece(int *row, int *col, char piece) {
             int landingRow = *row + 2 * dRow;
             int landingCol = *col + 2 * dCol;
 
-            while (captureRow != newRow || captureCol != newCol) {
-                if (board[captureRow][captureCol] == (piece == 'x' || piece == 'X' ? 'o' : 'x') ||
-                    board[captureRow][captureCol] == (piece == 'x' || piece == 'X' ? 'O' : 'X')) {
-                    break;
-                }
+            while (isKingPiece && board[captureRow][captureCol] == ' ') {
                 captureRow += dRow;
                 captureCol += dCol;
                 landingRow += dRow;
@@ -233,10 +248,17 @@ void playerMove(char piece) {
         drawBoard();
         printf("Move for %c!\n", piece);
         printf("Choose the piece to move:\n");
+
         printf("Row: ");
-        scanf("%d", &row);
+        while (scanf("%d", &row) != 1) {
+            printf("Invalid input! Please enter a number for the row: ");
+            while (getchar() != '\n'); 
+        }
         printf("Column: ");
-        scanf("%d", &col);
+        while (scanf("%d", &col) != 1) {
+            printf("Invalid input! Please enter a number for the column: ");
+            while (getchar() != '\n'); 
+        }
         row -= 1;
         col -= 1;
 
@@ -303,12 +325,22 @@ int main() {
         x = countPieces('x');
         o = countPieces('o');
 
+        if (!canPlayerMove('o')) {
+            printf("No moves left for player o. It's a draw!\n");
+            break;
+        }
+
         if (o == 0) break;
 
         playerMove('o');
         drawBoard();
         x = countPieces('x');
         o = countPieces('o');
+
+        if (!canPlayerMove('x')) {
+            printf("No moves left for player x. It's a draw!\n");
+            break;
+        }
     }
 
     if (x == 0) {
